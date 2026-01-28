@@ -1,0 +1,7 @@
+Это миграции
+alembic revision --autogenerate -m "add PredictRadiant to live_matches"
+alembic upgrade head
+
+Это для работы бэка
+Во первых запустить collector.py
+fastapi dev main.py

@@ -1,0 +1,17 @@
+volumes:
+  vkr_data:
+
+services:
+  db:
+    image: postgres:18
+    restart: unless-stopped
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - vkr_data:/var/lib/postgresql
+
+
