@@ -1,9 +1,34 @@
 from fastapi import FastAPI, HTTPException
+from database.ml_data_controller import get_match_snapshot
 from database.live_match_controller import get_all_live_matches
+from fastapi.middleware.cors import CORSMiddleware
+from database.match_controller import get_matches_history
 app = FastAPI(title="Live Matches API")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"], # адрес твоего фронта
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/api/live-matches")
 async def read_live_matches():
     data = get_all_live_matches()
-    print(data)
+    return data
+
+@app.get("/api/live-matches/{match_id}")
+async def read_live(match_id: int):
+    data = get_match_snapshot(match_id)
+    return data
+
+@app.get("/api/matches-history")
+async def read_history():
+    data = get_matches_history()
+    return data
+
+@app.get("/api/matches-history/{match_id}")
+async def read_history_match(match_id: int):
+    data = get_match_snapshot(match_id)
+    data.append({"result":"problem with steam api"})
     return data

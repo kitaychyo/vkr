@@ -43,3 +43,20 @@ class SnapshotMatches(Base):
     full_match_data = Column(JSONB)
 
     predict_radiant = Column(Float)
+
+class Matches(Base):
+    __tablename__ = "matches"
+
+    id = Column(Integer, primary_key=True)
+    match_id = Column(BigInteger, nullable=False, unique=True)
+    duration = Column(BigInteger)
+
+    DireTeamName = Column(Text)
+    DireTeamId = Column(String)
+    DireLogoTeamId = Column(String)
+
+    RadiantTeamName = Column(Text)
+    RadiantTeamId = Column(String)
+    RadiantLogoTeamId = Column(String)
+
+    status = Column(String)
