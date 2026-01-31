@@ -27,7 +27,7 @@ def update_live_matches(matches_list):
 
 def get_all_live_matches():
     with SessionLocal() as session:
-        matches = session.query(LiveMatches).all()
+        matches = session.query(LiveMatches).filter(LiveMatches.DireTeamId != "0").all()
         # Преобразуем объекты SQLAlchemy в словари
         result = []
         for m in matches:
