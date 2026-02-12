@@ -60,3 +60,9 @@ class Matches(Base):
     RadiantLogoTeamId = Column(String)
 
     status = Column(String)
+
+class DataForPredict(Base):
+    __tablename__ = "data_for_predict"
+    id = Column(Integer, primary_key=True)
+    match_id = Column(BigInteger, nullable=False, unique=False)
+    data_for_predict = Column(JSONB)
