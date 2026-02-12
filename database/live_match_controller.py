@@ -1,7 +1,7 @@
 from sqlalchemy.dialects.postgresql import insert
 
-from database.models import LiveMatches
-from database.db import SessionLocal
+from .models import LiveMatches
+from .db import SessionLocal
 
 def update_live_matches(matches_list):
     """

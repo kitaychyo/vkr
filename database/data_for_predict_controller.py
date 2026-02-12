@@ -1,7 +1,7 @@
 from sqlalchemy.dialects.postgresql import insert
 
-from database.models import DataForPredict
-from database.db import SessionLocal
+from .models import DataForPredict
+from .db import SessionLocal
 
 def update_data_for_predict(match_id, snapshot):
     with SessionLocal() as session:

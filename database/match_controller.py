@@ -1,5 +1,5 @@
-from database.db import SessionLocal
-from database.models import Matches
+from .db import SessionLocal
+from .models import Matches
 
 def add_matches(match):
     with SessionLocal() as session:

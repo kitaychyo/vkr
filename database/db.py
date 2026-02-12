@@ -1,5 +1,5 @@
 from sqlalchemy.orm import sessionmaker
-from database.models import LiveMatches, Base
+from .models import LiveMatches, Base
 from sqlalchemy import create_engine
 import os
 from dotenv import load_dotenv

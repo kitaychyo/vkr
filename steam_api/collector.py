@@ -1,5 +1,5 @@
-from match_list import fetch_match_list
-from parse_match import parse_match_list, transform_steam_live_data_for_predict
+from .match_list import fetch_match_list
+from .parse_match import parse_match_list, transform_steam_live_data_for_predict
 from database.ml_data_controller import update_matches_snapshot
 from database.match_controller import add_matches, update_matches
 from database.live_match_controller import update_live_matches

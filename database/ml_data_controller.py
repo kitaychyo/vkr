@@ -1,7 +1,7 @@
 from sqlalchemy.dialects.postgresql import insert
 
-from database.models import SnapshotMatches
-from database.db import SessionLocal
+from .models import SnapshotMatches
+from .db import SessionLocal
 
 def insert_match_predict():
     session = SessionLocal()
