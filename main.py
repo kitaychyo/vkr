@@ -10,9 +10,16 @@ from database.match_controller import get_matches_history
 
 app = FastAPI(title="Live Matches API")
 
+from fastapi.middleware.cors import CORSMiddleware
+
+origins = [
+    "https://vkr-frontend.onrender.com",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
