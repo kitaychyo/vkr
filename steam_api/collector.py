@@ -6,6 +6,7 @@ from database.live_match_controller import update_live_matches
 from LSTM_model.predict import Model
 from database.data_for_predict_controller import update_data_for_predict, get_match_snapshots_for_predict
 import time
+import asyncio
 '''
 Это говно надо перепсать типа чтобы мы сейвили данные сразу в 2 таблицы одну просто с кучей снапшотов формата
 match_id duration FULL_JSON (мб нет) надо думать (Я РОТ ЕЬАЛ КУЧИ ТАБЛИЦ И ВСЕ СРАЩИВАТЬ И ПАРСИТЬ((( и пердикт
@@ -18,7 +19,7 @@ match_id duration FULL_JSON (мб нет) надо думать (Я РОТ ЕЬ�
 PS ЩАС ФУЛЛ ХУЙНЯ 
 
 '''
-async def run_collector():
+def run_collector():
     predict = Model()
     while True:
         # Ответ от api
@@ -57,4 +58,4 @@ async def run_collector():
         time.sleep(30)
 
 if __name__ == "__main__":
-    run_collector()
+    asyncio.run(run_collector())
