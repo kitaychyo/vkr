@@ -1,4 +1,4 @@
-pip install --upgrade pip setuptools wheel
+
 absl-py==2.4.0
 alembic==1.18.1
 annotated-doc==0.0.4
@@ -82,6 +82,7 @@ websockets==16.0
 Werkzeug==3.1.5
 wheel==0.46.3
 wrapt==2.1.1
+
 
 
 
