@@ -35,7 +35,11 @@ def run_collector():
             full_data_for_predict = {
                 "data_for_predict": [row.data_for_predict for row in rows]
             }
-            probs = float(predict.probs_LSTM(full_data_for_predict["data_for_predict"]))
+            try:
+                probs = float(predict.probs_LSTM(full_data_for_predict["data_for_predict"]))
+            except KeyError as e:
+                return {"error": "Недостаточно данных для предсказания", "details": str(e)}
+
 
 
             match["PredictRadiant"] = probs
