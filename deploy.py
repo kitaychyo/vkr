@@ -11,6 +11,13 @@ import time
 import platform
 from pathlib import Path
 
+# Загрузить .env в самом начале
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
 # Цвета для вывода
 GREEN = '\033[92m'
 YELLOW = '\033[93m'
@@ -90,15 +97,11 @@ def start_postgres():
     """Запустить PostgreSQL контейнер"""
     print_info("Проверка PostgreSQL контейнера...")
     
-    # Загрузить переменные из .env
-    try:
-        from dotenv import load_dotenv
-        load_dotenv()
-    except:
-        os.environ.setdefault('POSTGRES_USER', 'vkr_user')
-        os.environ.setdefault('POSTGRES_PASSWORD', 'vkr_password')
-        os.environ.setdefault('POSTGRES_DB', 'vkr_db')
-        os.environ.setdefault('POSTGRES_PORT', '5432')
+    # Переменные уже загружены из .env
+    postgres_user = os.getenv('POSTGRES_USER', 'vkr_user')
+    postgres_pass = os.getenv('POSTGRES_PASSWORD', 'vkr_password')
+    postgres_db = os.getenv('POSTGRES_DB', 'vkr_db')
+    postgres_port = os.getenv('POSTGRES_PORT', '5432')
     
     # Проверить запущен ли контейнер
     check_cmd = 'docker ps --filter "name=vkr_db" --format "{{.Names}}"'
@@ -118,10 +121,6 @@ def start_postgres():
     
     # Создать новый контейнер
     print_info("Создание нового PostgreSQL контейнера...")
-    postgres_user = os.getenv('POSTGRES_USER', 'vkr_user')
-    postgres_pass = os.getenv('POSTGRES_PASSWORD', 'vkr_password')
-    postgres_db = os.getenv('POSTGRES_DB', 'vkr_db')
-    postgres_port = os.getenv('POSTGRES_PORT', '5432')
     
     cmd = (f'docker run -d --name vkr_db '
            f'-e POSTGRES_USER={postgres_user} '
@@ -131,14 +130,20 @@ def start_postgres():
            f'-v vkr_data:/var/lib/postgresql/data '
            f'postgres:18')
     
-    success = run_command(cmd, shell=True)
-    if success:
+    print_info(f"Команда: {cmd}")
+    result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+    
+    if result.returncode == 0:
         print_success("PostgreSQL контейнер создан")
         print_info("Ожидание запуска БД (10 секунд)...")
         time.sleep(10)
         return True
     else:
-        print_error("Ошибка при создании PostgreSQL контейнера")
+        print_error(f"Ошибка Docker: {result.stderr}")
+        print_info("Проверьте:")
+        print_info("1. Docker Desktop запущен?")
+        print_info("2. Есть ли права на запуск Docker команд? (sudo docker ps)")
+        print_info("3. Или используйте PostgreSQL локально вместо Docker")
         return False
 
 def install_python_deps():
@@ -221,32 +226,41 @@ def main():
     
     print_success(f"Python версия: {sys.version.split()[0]}")
     
-    # Создать .env файл
-    create_env_file()
-    
-    # Проверить Docker
-    if check_command_exists("docker"):
-        print_success("Docker установлен")
-        if docker_health_check():
-            print_success("Docker демон доступен")
-            if not start_postgres():
-                print_error("Не удалось запустить PostgreSQL контейнер")
-                return False
-        else:
-            print_error("Docker демон недоступен")
-            print_warning("Убедитесь, что Docker Desktop запущен (для Windows/Mac)")
-            return False
+    # Проверить если ли мы на Render
+    is_render = os.getenv('RENDER') == 'true'
+    if is_render:
+        print_success("Запуск на Render")
+        print_info("Пропуск Docker настройки (БД управляется Render)")
     else:
-        print_warning("Docker не найден")
-        print_warning("Убедитесь, что PostgreSQL запущена и доступна по DATABASE_URL")
+        # Создать .env файл только если его нет
+        if not Path(".env").exists():
+            create_env_file()
+        
+        # Проверить Docker
+        if check_command_exists("docker"):
+            print_success("Docker установлен")
+            if docker_health_check():
+                print_success("Docker демон доступен")
+                if not start_postgres():
+                    print_warning("Не удалось запустить PostgreSQL контейнер в Docker")
+                    print_warning("Продолжаем... используйте PostgreSQL локально")
+            else:
+                print_warning("Docker демон недоступен")
+                print_warning("Убедитесь, что Docker Desktop запущен или используйте PostgreSQL локально")
+        else:
+            print_warning("Docker не найден")
+            print_info("Используйте PostgreSQL локально (должна быть запущена)")
     
     # Установить Python зависимости
     if not install_python_deps():
         return False
     
-    # Запустить миграции
-    if not run_migrations():
-        print_warning("Продолжаем несмотря на ошибку миграций...")
+    # Запустить миграции (только если не на Render)
+    if not is_render:
+        if not run_migrations():
+            print_warning("Продолжаем несмотря на ошибку миграций...")
+    else:
+        print_info("Миграции запустятся автоматически при первом запуске")
     
     # Установить Frontend зависимости
     print_info("Проверка Node.js...")
