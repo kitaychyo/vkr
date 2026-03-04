@@ -1,65 +1,71 @@
+import time
+import logging
+
 from .match_list import fetch_match_list
 from .parse_match import parse_match_list, transform_steam_live_data_for_predict
 from database.ml_data_controller import update_matches_snapshot
 from database.match_controller import add_matches, update_matches
 from database.live_match_controller import update_live_matches
-from LSTM_model.predict import Model
 from database.data_for_predict_controller import update_data_for_predict, get_match_snapshots_for_predict
-import time
-import asyncio
-'''
-Это говно надо перепсать типа чтобы мы сейвили данные сразу в 2 таблицы одну просто с кучей снапшотов формата
-match_id duration FULL_JSON (мб нет) надо думать (Я РОТ ЕЬАЛ КУЧИ ТАБЛИЦ И ВСЕ СРАЩИВАТЬ И ПАРСИТЬ((( и пердикт
+from LSTM_model.predict import Model
 
-ВТорая ливе матчес надо добавить поле пердикт 
-  
-И еще как идея реализовать залупу лупу для сохранения результатов матча 
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+log = logging.getLogger(__name__)
 
-Также надо что-то придумать с отображением хотябы базовым (типа график пердикта и че то еще надо думать блять)
-PS ЩАС ФУЛЛ ХУЙНЯ 
+POLL_INTERVAL = 30
 
-'''
+
 def run_collector():
     predict = Model()
+    log.info("Collector started, polling every %ds", POLL_INTERVAL)
+
     while True:
-        # Ответ от api
-        response = fetch_match_list()
-        # Парсим этот ответ на live data и data for predict
-        matches = parse_match_list(response)
+        try:
+            response = fetch_match_list()
+            if not response:
+                log.info("No live matches, sleeping")
+                time.sleep(POLL_INTERVAL)
+                continue
 
-        for match, raw_match in zip(matches, response):
-            data_for_predict = transform_steam_live_data_for_predict(raw_match)
-            update_data_for_predict(match_id = data_for_predict[0], snapshot=data_for_predict[2])
+            matches = parse_match_list(response)
 
-            rows = get_match_snapshots_for_predict(match_id = data_for_predict[0])
-            full_data_for_predict = {
-                "data_for_predict": [row.data_for_predict for row in rows]
-            }
-            try:
-                probs = float(predict.probs_LSTM(full_data_for_predict["data_for_predict"]))
-            except KeyError as e:
-                return {"error": "Недостаточно данных для предсказания", "details": str(e)}
+            for match, raw_match in zip(matches, response):
+                match_id, duration, snapshot_data = transform_steam_live_data_for_predict(raw_match)
 
+                update_data_for_predict(match_id=match_id, snapshot=snapshot_data)
 
+                rows = get_match_snapshots_for_predict(match_id=match_id)
+                data_list = [row.data_for_predict for row in rows]
 
-            match["PredictRadiant"] = probs
-            match_snapshot = {
-                "match_id": data_for_predict[0],
-                "duration": data_for_predict[1],
-                "full_match_data": data_for_predict[2],
-                "predict_radiant": probs,
-            }
-            update_matches_snapshot(match_snapshot) # добавляем снопшот матча в таблицу В итоге там будет просто куча снапшотов матчей
-            match["status"] = "In play"
-            add_matches(match)
-            match.pop("status", None)
+                try:
+                    result_df = predict.probs_LSTM(data_list)
+                    prob_last = float(result_df["prob"].iloc[-1])
+                    predict_json = result_df.to_dict(orient="list")
+                except Exception as e:
+                    log.warning("Prediction failed for match %s: %s", match_id, e)
+                    continue
 
-        '''
-        Сохраняем live матчи в отдельную таблицу
-        '''
-        update_live_matches(matches)
-        update_matches(matches)
-        time.sleep(30)
+                match["PredictRadiant"] = prob_last
+
+                update_matches_snapshot({
+                    "match_id": match_id,
+                    "duration": duration,
+                    "full_match_data": snapshot_data,
+                    "predict": predict_json,
+                })
+
+                match["status"] = "In play"
+                add_matches(match)
+                match.pop("status", None)
+
+            update_live_matches(matches)
+            update_matches(matches)
+
+        except Exception as e:
+            log.exception("Collector loop error: %s", e)
+
+        time.sleep(POLL_INTERVAL)
+
 
 if __name__ == "__main__":
-    asyncio.run(run_collector())
+    run_collector()

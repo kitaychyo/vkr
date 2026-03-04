@@ -42,7 +42,7 @@ class SnapshotMatches(Base):
 
     full_match_data = Column(JSONB)
 
-    predict_radiant = Column(Float)
+    predict = Column(JSONB)
 
 class Matches(Base):
     __tablename__ = "matches"
