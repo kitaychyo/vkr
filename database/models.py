@@ -30,7 +30,7 @@ class LiveMatches(Base):
     RadiantTeamId = Column(String)
     RadiantLogoTeamId = Column(String)
 
-    PredictRadiant = Column(Float)
+    PredictRadiant = Column(JSONB)
 
 
 class SnapshotMatches(Base):
@@ -42,7 +42,7 @@ class SnapshotMatches(Base):
 
     full_match_data = Column(JSONB)
 
-    predict = Column(JSONB)
+    PredictRadiant = Column(JSONB)
 
 class Matches(Base):
     __tablename__ = "matches"

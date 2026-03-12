@@ -1,6 +1,6 @@
 import time
 import logging
-
+import json
 from .match_list import fetch_match_list
 from .parse_match import parse_match_list, transform_steam_live_data_for_predict
 from database.ml_data_controller import update_matches_snapshot
@@ -12,7 +12,7 @@ from LSTM_model.predict import Model
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 log = logging.getLogger(__name__)
 
-POLL_INTERVAL = 30
+POLL_INTERVAL = 60
 
 
 def run_collector():
@@ -30,6 +30,10 @@ def run_collector():
             matches = parse_match_list(response)
 
             for match, raw_match in zip(matches, response):
+
+                if len(raw_match["players"]) < 4:
+                    continue
+
                 match_id, duration, snapshot_data = transform_steam_live_data_for_predict(raw_match)
 
                 update_data_for_predict(match_id=match_id, snapshot=snapshot_data)
@@ -38,20 +42,20 @@ def run_collector():
                 data_list = [row.data_for_predict for row in rows]
 
                 try:
-                    result_df = predict.probs_LSTM(data_list)
-                    prob_last = float(result_df["prob"].iloc[-1])
-                    predict_json = result_df.to_dict(orient="list")
+                    predict_json = predict.probs_LSTM(data_list)
+                    prob_last = predict_json["all"]
                 except Exception as e:
                     log.warning("Prediction failed for match %s: %s", match_id, e)
                     continue
 
-                match["PredictRadiant"] = prob_last
+
+                match["PredictRadiant"] = json.dumps(predict_json)
 
                 update_matches_snapshot({
                     "match_id": match_id,
                     "duration": duration,
                     "full_match_data": snapshot_data,
-                    "predict": predict_json,
+                    "PredictRadiant": predict_json,
                 })
 
                 match["status"] = "In play"

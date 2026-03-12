@@ -40,7 +40,7 @@ def get_all_live_matches():
                 "RadiantTeamName": m.RadiantTeamName,
                 "RadiantTeamId": str(m.RadiantTeamId),
                 "RadiantLogoTeamId": str(m.RadiantLogoTeamId),
-                "PredictRadiant": str(m.PredictRadiant),
+                "PredictRadiant": m.PredictRadiant,
             })
         return result
 

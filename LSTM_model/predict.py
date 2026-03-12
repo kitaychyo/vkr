@@ -57,27 +57,26 @@ class Model:
         lengths = lengths.to(self.device)
 
         mask_groups = {
-            'economy': [1, 0, 0],
-            'composition': [0, 1, 0],
-            'objectives': [0, 0, 1],
             'econ+comp': [1, 1, 0],
             'econ+obj': [1, 0, 1],
             'comp+obj': [0, 1, 1],
             'all': [1, 1, 1]
         }
 
-        # 5. Маска групп
-        mask = torch.tensor([1, 1, 1], dtype=torch.float32).to(self.device)
+        probs_dict = {}
 
-        # 6. Предсказание
-        self.LSTM_model.eval()
-        with torch.no_grad():
-            logits = self.LSTM_model(X_pad, lengths, mask)
-            probs = torch.sigmoid(logits)
+        for mask_name, mask_group in mask_groups.items():
+            mask = torch.tensor(mask_group, dtype=torch.float32).to(self.device)
 
-        # 7. Формируем результат
-        result = pd.DataFrame({
-            "minute": df["minute"].values,
-            "prob": probs[0].cpu().numpy()
-        })
-        return result
+            # Предсказание
+            self.LSTM_model.eval()
+            with torch.no_grad():
+                logits = self.LSTM_model(X_pad, lengths, mask)
+                probs = torch.sigmoid(logits)
+
+            # берём последний элемент строки
+            value = probs.reshape(-1)[-1].item()
+
+            probs_dict[mask_name] = value
+
+        return probs_dict
