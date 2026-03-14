@@ -1,6 +1,6 @@
 from sqlalchemy.dialects.postgresql import insert
 
-from .models import LiveMatches
+from .models import LiveMatches, SnapshotMatches
 from .db import SessionLocal
 
 def update_live_matches(matches_list):
@@ -31,7 +31,12 @@ def get_all_live_matches():
         # Преобразуем объекты SQLAlchemy в словари
         result = []
         for m in matches:
-            result.append({
+            # Получаем latest snapshot для full_match_data
+            latest_snapshot = session.query(SnapshotMatches).filter(
+                SnapshotMatches.match_id == m.match_id
+            ).order_by(SnapshotMatches.id.desc()).first()
+            
+            match_data = {
                 "match_id": m.match_id,
                 "duration": m.duration,
                 "DireTeamName": m.DireTeamName,
@@ -41,6 +46,8 @@ def get_all_live_matches():
                 "RadiantTeamId": str(m.RadiantTeamId),
                 "RadiantLogoTeamId": str(m.RadiantLogoTeamId),
                 "PredictRadiant": m.PredictRadiant,
-            })
+                "full_match_data": latest_snapshot.full_match_data if latest_snapshot else None,
+            }
+            result.append(match_data)
         return result
 
