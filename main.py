@@ -40,8 +40,22 @@ async def read_live(match_id: int):
     return data
 
 @app.get("/api/matches-history")
-async def read_history():
-    data = get_matches_history()
+async def read_history(
+    search: str = "",
+    radiant_team: str = "",
+    dire_team: str = "",
+    status: str = "",
+    min_duration: int = 0,
+    max_duration: int = 9999,
+):
+    data = get_matches_history(
+        search=search,
+        radiant_team=radiant_team,
+        dire_team=dire_team,
+        status=status,
+        min_duration=min_duration,
+        max_duration=max_duration,
+    )
     return data
 
 @app.get("/api/matches-history/{match_id}")
