@@ -1,5 +1,7 @@
 # Dota 2 Live Predictor
 
+## 🌐 **Select Language:** [English](README_EN.md) | [Русский](README.md)
+
 Real-time win probability predictions for professional Dota 2 matches using LSTM neural networks.
 
 ## 🎯 Overview
