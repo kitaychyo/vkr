@@ -15,7 +15,7 @@ class Model:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         self.LSTM_model = MultiGroupLSTM()
-        self.LSTM_model.load_state_dict(torch.load("LSTM_model/multi_group_lstm_weights1.pth"))
+        self.LSTM_model.load_state_dict(torch.load("LSTM_model/multi_group_lstm_weights3.pth"))
         self.LSTM_model.eval()
         with open("LSTM_model/scalergroup1.pkl", "rb") as f:
             self.scaler = pickle.load(f)
